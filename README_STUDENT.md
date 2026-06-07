@@ -73,7 +73,7 @@ This creates:
 - `models/random_forest_classifier.joblib`
 - `models/random_forest_regressor.joblib`
 
-## Run FastAPI
+## Run App Locally
 
 ```bash
 uvicorn app.main:app --reload --port 8000
@@ -82,9 +82,12 @@ uvicorn app.main:app --reload --port 8000
 Open:
 
 ```text
+http://127.0.0.1:8000/
 http://127.0.0.1:8000/docs
 http://127.0.0.1:8000/redoc
 ```
+
+The Gradio dashboard is mounted at `/`.
 
 Important API endpoints:
 
@@ -95,18 +98,6 @@ Important API endpoints:
 - `POST /api/predict/sales`
 - `GET /api/forecast/monthly-sales`
 
-## Run Gradio Dashboard
-
-```bash
-python3 -m app.dashboard.gradio_app
-```
-
-Open:
-
-```text
-http://127.0.0.1:7860
-```
-
 Dashboard tabs:
 
 - Tableau Dashboard
@@ -116,21 +107,30 @@ Dashboard tabs:
 - Sales Prediction
 - Future Sales Forecast
 
-## Run FastAPI and Gradio Together
+## Run With Startup Script
 
 ```bash
 sh scripts/start.sh
 ```
 
-FastAPI runs on port `8000`.
-Gradio runs on port `7860`.
+The startup script uses `PORT` if it exists, otherwise it uses `8000`.
 
 ## Docker
 
 ```bash
 docker build -t adventureworks-crm .
-docker run -p 8000:8000 -p 7860:7860 adventureworks-crm
+docker run --rm -p 8000:8000 -e PORT=8000 adventureworks-crm
 ```
+
+## Railway
+
+1. Push the project to GitHub.
+2. Create a new Railway project from the GitHub repo.
+3. Railway will detect the root `Dockerfile`.
+4. Deploy the service.
+5. Open the Railway domain.
+
+Railway provides the `PORT` variable automatically, and `scripts/start.sh` binds to it.
 
 ## Tests
 

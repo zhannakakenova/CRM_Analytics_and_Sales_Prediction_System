@@ -72,7 +72,7 @@ python3 -m app.ml.training
 - `models/random_forest_classifier.joblib`;
 - `models/random_forest_regressor.joblib`.
 
-## Шаг 3. Запустить FastAPI
+## Шаг 3. Запустить приложение локально
 
 ```bash
 uvicorn app.main:app --reload --port 8000
@@ -81,9 +81,12 @@ uvicorn app.main:app --reload --port 8000
 Открыть:
 
 ```text
+http://127.0.0.1:8000/
 http://127.0.0.1:8000/docs
 http://127.0.0.1:8000/redoc
 ```
+
+Gradio dashboard находится на `/`.
 
 Главные endpoints:
 
@@ -94,18 +97,6 @@ http://127.0.0.1:8000/redoc
 - `POST /api/predict/sales`
 - `GET /api/forecast/monthly-sales`
 
-## Шаг 4. Запустить Gradio dashboard
-
-```bash
-python3 -m app.dashboard.gradio_app
-```
-
-Открыть:
-
-```text
-http://127.0.0.1:7860
-```
-
 В dashboard есть вкладки:
 
 - Tableau Dashboard;
@@ -115,21 +106,30 @@ http://127.0.0.1:7860
 - Sales Prediction;
 - Future Sales Forecast.
 
-## Запустить FastAPI и Gradio вместе
+## Запуск через startup script
 
 ```bash
 sh scripts/start.sh
 ```
 
-FastAPI работает на порту `8000`.
-Gradio работает на порту `7860`.
+Скрипт использует переменную `PORT`, если она есть. Иначе использует `8000`.
 
 ## Docker
 
 ```bash
 docker build -t adventureworks-crm .
-docker run -p 8000:8000 -p 7860:7860 adventureworks-crm
+docker run --rm -p 8000:8000 -e PORT=8000 adventureworks-crm
 ```
+
+## Railway
+
+1. Загрузи проект в GitHub.
+2. В Railway создай новый проект из GitHub repo.
+3. Railway найдет `Dockerfile` в корне проекта.
+4. Запусти deploy.
+5. Открой Railway domain.
+
+Railway автоматически дает переменную `PORT`, а `scripts/start.sh` запускает приложение на этом порту.
 
 ## Тесты
 

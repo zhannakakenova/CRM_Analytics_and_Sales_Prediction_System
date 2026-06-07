@@ -12,7 +12,7 @@ Build one MVC-style CRM analytics platform with:
 - RandomForestRegressor for sales amount prediction,
 - monthly sales forecasting,
 - pytest coverage,
-- Docker startup.
+- Docker/Railway startup.
 
 ## Main Application
 
@@ -49,23 +49,21 @@ Train models:
 python3 -m app.ml.training
 ```
 
-Run FastAPI:
+Run the app:
 
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-Run Gradio:
-
-```bash
-python3 -m app.dashboard.gradio_app
-```
-
-Run both:
+Run with startup script:
 
 ```bash
 sh scripts/start.sh
 ```
+
+The Gradio dashboard is mounted at `/`.
+Swagger is available at `/docs`.
+ReDoc is available at `/redoc`.
 
 Run tests:
 
