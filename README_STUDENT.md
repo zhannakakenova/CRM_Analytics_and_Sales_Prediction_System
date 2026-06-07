@@ -1,20 +1,48 @@
-# CRM School Project (Very Simple Guide)
+# AdventureWorks CRM Analytics Platform
 
-This project helps you do 4 things:
-1. Clean sales data
-2. Explore data with charts
-3. Train 2 machine learning models
-4. Show everything in Gradio dashboard
+This project is a small CRM analytics platform for AdventureWorks sales data.
 
-## Project Files
-- `src/data_exploration.py` -> data cleaning + charts
-- `src/train_models.py` -> training models
-- `src/predict_classification.py` -> Pipeline 1 (Buy / Not Buy)
-- `src/predict_regression.py` -> Pipeline 2 (Sales Amount)
-- `src/dashboard_gradio.py` -> dashboard app
+It has one application package:
 
-## Step 0: Install
-Open terminal in project folder and run:
+```text
+app/
+```
+
+The platform includes:
+
+- FastAPI API with Swagger docs
+- Gradio dashboard
+- Tableau dashboard embed
+- EDA summaries and charts
+- Buy / Not Buy prediction
+- Sales amount prediction
+- Future monthly sales forecasting
+
+## Project Structure
+
+```text
+app/
+├── api/
+│   ├── routers/      # FastAPI endpoints
+│   ├── schemas/      # Pydantic request/response models
+│   └── services/     # Data, EDA, and business logic
+├── dashboard/        # Single Gradio dashboard
+├── ml/               # Classifier, regressor, forecasting, training
+├── models/           # Package marker only
+├── tests/            # Pytest tests
+├── core.py           # Project paths
+└── main.py           # FastAPI app
+```
+
+Data and generated artifacts stay outside the app:
+
+```text
+data/
+models/
+outputs/
+```
+
+## Install
 
 ```bash
 python3 -m venv .venv
@@ -22,96 +50,100 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## Step 1: Run Data Exploration
-This step cleans data and creates charts.
+## Generate EDA Data and Charts
 
 ```bash
-python3 src/data_exploration.py
+python3 -m app.api.services.eda_pipeline
 ```
 
-You will get:
+This creates:
+
 - `data/processed/merged_sales_data.csv`
-- chart images in `outputs/eda/`
+- `outputs/eda/summary.json`
+- EDA chart images in `outputs/eda/`
 
-## Step 2: Run Training
-This step trains both required models:
-- `RandomForestClassifier` (Buy / Not Buy)
-- `RandomForestRegressor` (predict sales amount)
+## Train Models
 
 ```bash
-python3 src/train_models.py
+python3 -m app.ml.training
 ```
 
-You will get model files in `models/`.
+This creates:
 
-## Step 3A: Run Classification Pipeline (Buy / Not Buy)
-What it means:
-- Input: customer + product information
-- Output: `Buy` or `Not Buy` + probability
+- `models/random_forest_classifier.joblib`
+- `models/random_forest_regressor.joblib`
 
-Example:
+## Run FastAPI
 
 ```bash
-python3 src/predict_classification.py \
-  --customer_key 11000 \
-  --product_key 214 \
-  --order_quantity 1 \
-  --list_price 1200 \
-  --country_region "United States" \
-  --state_province "California" \
-  --category "Bikes" \
-  --subcategory "Mountain Bikes" \
-  --color "Black" \
-  --channel "Reseller" \
-  --region "Northwest"
+uvicorn app.main:app --reload --port 8000
 ```
 
-## Step 3B: Run Regression Pipeline (Sales Amount)
-What it means:
-- Input: customer + product + pricing + time info
-- Output: predicted sales number (`sales_amount`)
+Open:
 
-Example:
+```text
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/redoc
+```
+
+Important API endpoints:
+
+- `GET /api/eda/monthly-sales`
+- `GET /api/eda/region-sales`
+- `GET /api/eda/category-sales`
+- `POST /api/predict/buy`
+- `POST /api/predict/sales`
+- `GET /api/forecast/monthly-sales`
+
+## Run Gradio Dashboard
 
 ```bash
-python3 src/predict_regression.py \
-  --customer_key 11000 \
-  --product_key 214 \
-  --order_quantity 1 \
-  --unit_price 1000 \
-  --unit_price_discount_pct 0.0 \
-  --list_price 1200 \
-  --country_region "United States" \
-  --state_province "California" \
-  --category "Bikes" \
-  --subcategory "Mountain Bikes" \
-  --color "Black" \
-  --channel "Reseller" \
-  --region "Northwest" \
-  --month "January" \
-  --fiscal_quarter "Q1"
+python3 -m app.dashboard.gradio_app
 ```
 
-## Step 4: Open Gradio Dashboard
+Open:
+
+```text
+http://127.0.0.1:7860
+```
+
+Dashboard tabs:
+
+- Tableau Dashboard
+- EDA Summary
+- Interactive Analysis
+- Buy / Not Buy Prediction
+- Sales Prediction
+- Future Sales Forecast
+
+## Run FastAPI and Gradio Together
 
 ```bash
-python3 src/dashboard_gradio.py
+sh scripts/start.sh
 ```
 
-Then open the local link from terminal (usually `http://127.0.0.1:7860`).
+FastAPI runs on port `8000`.
+Gradio runs on port `7860`.
 
-Dashboard has:
-- EDA summary and charts
-- Interactive Data Analysis tab: filter current data and make new analysis tables/charts
-- Classification tab: predicts `Buy` or `Not Buy`
-- Regression tab: predicts `sales_amount`
+## Docker
 
-## Easy Workflow (Short)
-1. `python3 src/data_exploration.py`
-2. `python3 src/train_models.py`
-3. `python3 src/dashboard_gradio.py`
+```bash
+docker build -t adventureworks-crm .
+docker run -p 8000:8000 -p 7860:7860 adventureworks-crm
+```
 
-## If Something Fails
-- Check you activated venv: `source .venv/bin/activate`
-- Check models exist in `models/`
-- Run EDA first, then training, then dashboard
+## Tests
+
+```bash
+pytest -q
+```
+
+## Short Workflow
+
+```bash
+source .venv/bin/activate
+python3 -m app.api.services.eda_pipeline
+python3 -m app.ml.training
+pytest -q
+sh scripts/start.sh
+```

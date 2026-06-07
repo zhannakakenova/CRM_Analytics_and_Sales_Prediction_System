@@ -5,3 +5,8 @@ matplotlib
 joblib
 gradio
 huggingface_hub<1.0
+fastapi
+uvicorn
+pytest
+httpx
+plotly

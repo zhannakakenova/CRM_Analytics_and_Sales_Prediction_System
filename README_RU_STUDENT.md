@@ -1,452 +1,158 @@
-# CRM проект по анализу данных
+# CRM проект AdventureWorks
 
-Это простой школьный проект по Data Science.
+Это учебный CRM/Data Science проект по данным продаж AdventureWorks.
 
-Мы работаем с данными продаж AdventureWorks и хотим понять:
-
-- что продавалось лучше всего;
-- какие клиенты важные;
-- какие регионы приносят больше денег;
-- купит ли клиент товар или нет;
-- сколько примерно будет продаж.
-
-## Главная идея проекта
-
-Представь, что у нас есть магазин велосипедов и товаров для велосипедов.
-
-У магазина много данных:
-
-- кто покупал;
-- какой товар покупали;
-- в какой стране или регионе;
-- сколько товаров купили;
-- сколько денег магазин получил.
-
-Наша задача: посмотреть на эти данные, найти интересные факты и построить две модели машинного обучения.
-
-## Что требует задание
-
-По файлу `tasks.md` нужно сделать 5 вещей:
-
-1. Очистить данные.
-2. Сделать EDA, то есть исследовать данные.
-3. Найти интересные бизнес-выводы.
-4. Построить две модели машинного обучения.
-5. Показать результат красиво, например через Gradio dashboard.
-
-## Какие модели используются
-
-В проекте есть две модели.
-
-### 1. Classification
-
-Файл:
-
-```bash
-src/predict_classification.py
-```
-
-Вопрос модели:
+Теперь в проекте есть одна главная папка приложения:
 
 ```text
-Купит клиент этот товар или не купит?
+app/
 ```
 
-Ответ модели:
+Внутри нее находятся:
+
+- FastAPI API;
+- один Gradio dashboard;
+- Tableau dashboard embed;
+- EDA анализ;
+- Classification: `Buy / Not Buy`;
+- Regression: прогноз суммы продаж;
+- Forecasting: прогноз будущих продаж.
+
+## Структура
 
 ```text
-Buy
+app/
+├── api/
+│   ├── routers/      # FastAPI endpoints
+│   ├── schemas/      # Pydantic схемы
+│   └── services/     # работа с данными и EDA
+├── dashboard/        # один Gradio dashboard
+├── ml/               # модели и обучение
+├── tests/            # тесты
+├── core.py           # пути проекта
+└── main.py           # FastAPI app
 ```
 
-или
+Данные и результаты лежат отдельно:
 
 ```text
-Not Buy
-```
-
-Используется модель:
-
-```text
-RandomForestClassifier
-```
-
-### 2. Regression
-
-Файл:
-
-```bash
-src/predict_regression.py
-```
-
-Вопрос модели:
-
-```text
-Сколько денег продаж мы ожидаем?
-```
-
-Ответ модели:
-
-```text
-Например: 1024.52
-```
-
-Используется модель:
-
-```text
-RandomForestRegressor
-```
-
-## Структура проекта
-
-### `tasks.md`
-
-Это описание задания.
-
-Там написано, что нужно сделать:
-
-- очистка данных;
-- анализ данных;
-- prediction;
-- Random Forest модели;
-- презентация на 5 минут.
-
-### `data/`
-
-Это папка с данными.
-
-Внутри есть таблицы:
-
-- клиенты;
-- товары;
-- продажи;
-- регионы;
-- даты.
-
-### `src/common.py`
-
-Это общий помощник для проекта.
-
-Он делает важные простые вещи:
-
-- загружает CSV файлы;
-- соединяет таблицы вместе;
-- чистит данные;
-- сохраняет обработанные данные.
-
-### `src/data_exploration.py`
-
-Этот файл делает EDA.
-
-EDA означает:
-
-```text
-Exploratory Data Analysis
-```
-
-По-русски:
-
-```text
-исследовательский анализ данных
-```
-
-Этот файл:
-
-- очищает данные;
-- удаляет дубликаты;
-- удаляет пропуски;
-- убирает выбросы;
-- создает графики.
-
-После запуска появляются картинки в папке:
-
-```bash
-outputs/eda/
-```
-
-Например:
-
-- продажи по месяцам;
-- продажи по регионам;
-- топ товаров;
-- топ клиентов.
-
-### `src/train_models.py`
-
-Этот файл обучает модели.
-
-Он обучает сразу две модели:
-
-- `RandomForestClassifier`;
-- `RandomForestRegressor`.
-
-После запуска модели сохраняются в папку:
-
-```bash
+data/
 models/
+outputs/
 ```
 
-### `src/predict_classification.py`
-
-Это отдельный prediction pipeline для classification.
-
-Он отвечает на вопрос:
-
-```text
-Купит клиент товар или нет?
-```
-
-### `src/predict_regression.py`
-
-Это отдельный prediction pipeline для regression.
-
-Он отвечает на вопрос:
-
-```text
-Сколько будет продаж?
-```
-
-### `src/dashboard_gradio.py`
-
-Это главный dashboard.
-
-Dashboard открывается в браузере.
-
-В нем есть вкладки:
-
-- `EDA Summary`;
-- `Interactive Data Analysis`;
-- `Classification: Buy / Not Buy`;
-- `Regression: Sales Amount`.
-
-## Как запустить проект
-
-Сначала открой терминал в папке проекта.
-
-## Шаг 1. Создать virtual environment
-
-Virtual environment помогает хранить библиотеки только для этого проекта.
-
-Команда:
+## Установка
 
 ```bash
 python3 -m venv .venv
-```
-
-## Шаг 2. Включить virtual environment
-
-Команда:
-
-```bash
 source .venv/bin/activate
-```
-
-Если все хорошо, в терминале появится:
-
-```text
-(.venv)
-```
-
-## Шаг 3. Установить библиотеки
-
-Команда:
-
-```bash
 pip install -r requirements.txt
 ```
 
-## Шаг 4. Сделать анализ данных
-
-Команда:
+## Шаг 1. Создать EDA и очищенные данные
 
 ```bash
-python3 src/data_exploration.py
+python3 -m app.api.services.eda_pipeline
 ```
 
 После этого появятся:
 
-- очищенный файл данных;
-- графики;
-- summary JSON.
+- `data/processed/merged_sales_data.csv`;
+- `outputs/eda/summary.json`;
+- графики в `outputs/eda/`.
 
-## Шаг 5. Обучить модели
-
-Команда:
+## Шаг 2. Обучить модели
 
 ```bash
-python3 src/train_models.py
+python3 -m app.ml.training
 ```
 
-После этого появятся файлы моделей:
+После этого появятся:
+
+- `models/random_forest_classifier.joblib`;
+- `models/random_forest_regressor.joblib`.
+
+## Шаг 3. Запустить FastAPI
 
 ```bash
-models/random_forest_classifier.joblib
-models/random_forest_regressor.joblib
+uvicorn app.main:app --reload --port 8000
 ```
 
-## Шаг 6. Проверить classification prediction
+Открыть:
 
-Команда:
+```text
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000/redoc
+```
+
+Главные endpoints:
+
+- `GET /api/eda/monthly-sales`
+- `GET /api/eda/region-sales`
+- `GET /api/eda/category-sales`
+- `POST /api/predict/buy`
+- `POST /api/predict/sales`
+- `GET /api/forecast/monthly-sales`
+
+## Шаг 4. Запустить Gradio dashboard
 
 ```bash
-python3 src/predict_classification.py \
-  --customer_key 11000 \
-  --product_key 214 \
-  --order_quantity 1 \
-  --list_price 1200 \
-  --country_region "United States" \
-  --state_province "California" \
-  --category "Bikes" \
-  --subcategory "Mountain Bikes" \
-  --color "Black" \
-  --channel "Reseller" \
-  --region "Northwest"
+python3 -m app.dashboard.gradio_app
 ```
 
-Ты увидишь примерно такой ответ:
+Открыть:
 
 ```text
-Result: Buy
-Probability of Buy: 0.810
+http://127.0.0.1:7860
 ```
 
-Это значит:
+В dashboard есть вкладки:
 
-```text
-Модель думает, что клиент купит товар.
-```
+- Tableau Dashboard;
+- EDA Summary;
+- Interactive Analysis;
+- Buy / Not Buy Prediction;
+- Sales Prediction;
+- Future Sales Forecast.
 
-## Шаг 7. Проверить regression prediction
-
-Команда:
+## Запустить FastAPI и Gradio вместе
 
 ```bash
-python3 src/predict_regression.py \
-  --customer_key 11000 \
-  --product_key 214 \
-  --order_quantity 1 \
-  --unit_price 1000 \
-  --unit_price_discount_pct 0.0 \
-  --list_price 1200 \
-  --country_region "United States" \
-  --state_province "California" \
-  --category "Bikes" \
-  --subcategory "Mountain Bikes" \
-  --color "Black" \
-  --channel "Reseller" \
-  --region "Northwest" \
-  --month "January" \
-  --fiscal_quarter "Q1"
+sh scripts/start.sh
 ```
 
-Ты увидишь примерно такой ответ:
+FastAPI работает на порту `8000`.
+Gradio работает на порту `7860`.
 
-```text
-Predicted sales_amount: 1024.52
-```
-
-Это значит:
-
-```text
-Модель ожидает продажи примерно на 1024.52.
-```
-
-## Шаг 8. Открыть Gradio dashboard
-
-Команда:
+## Docker
 
 ```bash
-python3 src/dashboard_gradio.py
+docker build -t adventureworks-crm .
+docker run -p 8000:8000 -p 7860:7860 adventureworks-crm
 ```
 
-Потом открой в браузере:
+## Тесты
 
-```text
-http://127.0.0.1:7960
+```bash
+pytest -q
 ```
 
-## Что есть в Gradio dashboard
-
-### EDA Summary
-
-Здесь можно увидеть готовые графики:
-
-- продажи по месяцам;
-- продажи по регионам;
-- топ товаров;
-- топ клиентов.
-
-### Interactive Data Analysis
-
-Здесь можно самому исследовать данные.
-
-Например, можно выбрать:
-
-- продажи по странам;
-- продажи по категориям;
-- продажи по регионам;
-- продажи по клиентам;
-- продажи по месяцам.
-
-Можно использовать фильтры:
-
-- страна;
-- категория;
-- канал продаж.
-
-### Classification: Buy / Not Buy
-
-Здесь можно ввести данные клиента и товара.
-
-Dashboard покажет:
-
-- `Buy`;
-- или `Not Buy`;
-- вероятность покупки.
-
-### Regression: Sales Amount
-
-Здесь можно ввести данные товара, региона и цены.
-
-Dashboard покажет:
-
-```text
-сколько продаж ожидает модель
-```
-
-## Простая последовательность запуска
-
-Если коротко, запускай так:
+## Короткий workflow
 
 ```bash
 source .venv/bin/activate
-python3 src/data_exploration.py
-python3 src/train_models.py
-python3 src/dashboard_gradio.py
+python3 -m app.api.services.eda_pipeline
+python3 -m app.ml.training
+pytest -q
+sh scripts/start.sh
 ```
 
 ## Что сказать на презентации
 
-Можно рассказать так:
-
 1. Я взял данные AdventureWorks.
 2. Я очистил данные: удалил пропуски, дубликаты и выбросы.
-3. Я сделал EDA и посмотрел продажи по времени, регионам, клиентам и товарам.
-4. Я построил classification модель, чтобы предсказывать `Buy / Not Buy`.
-5. Я построил regression модель, чтобы предсказывать сумму продаж.
-6. Я сделал Gradio dashboard, чтобы удобно показать результаты.
-
-## Очень коротко
-
-Этот проект отвечает на два главных вопроса:
-
-```text
-Купит ли клиент товар?
-```
-
-и
-
-```text
-Сколько денег может принести продажа?
-```
-
-Это полезно для CRM, потому что компания может лучше понимать клиентов и планировать продажи.
+3. Я сделал EDA: продажи по времени, регионам, товарам и клиентам.
+4. Я построил classification модель для `Buy / Not Buy`.
+5. Я построил regression модель для суммы продаж.
+6. Я добавил прогноз будущих продаж.
+7. Я сделал FastAPI API, Swagger docs и Gradio dashboard с Tableau.
