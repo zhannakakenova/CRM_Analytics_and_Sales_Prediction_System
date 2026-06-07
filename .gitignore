@@ -5,6 +5,12 @@ venv/
 env/
 ENV/
 
+# R session files
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+
 # Python cache and bytecode
 __pycache__/
 *.py[cod]
