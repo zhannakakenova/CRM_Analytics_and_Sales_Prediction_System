@@ -31,5 +31,7 @@ def predict_buy(input_row: dict) -> tuple[str, float]:
     model = load_classifier()
     frame = pd.DataFrame([input_row])[CLASSIFIER_FEATURES]
     prediction = int(model.predict(frame)[0])
-    probability = float(model.predict_proba(frame)[0][1])
+    probabilities = model.predict_proba(frame)[0]
+    class_labels = list(model.classes_)
+    probability = float(probabilities[class_labels.index(1)]) if 1 in class_labels else 0.0
     return ("Buy" if prediction == 1 else "Not Buy"), probability

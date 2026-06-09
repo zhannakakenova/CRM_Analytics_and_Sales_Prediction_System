@@ -62,7 +62,7 @@ def test_classification_endpoint() -> None:
 def test_regression_endpoint() -> None:
     response = client.post("/api/predict/sales", json=SALES_PAYLOAD)
     assert response.status_code == 200
-    assert response.json()["predicted_sales_amount"] >= 0
+    assert response.json()["predicted_sales_amount"] == 1000
 
 
 def test_forecast_endpoint() -> None:

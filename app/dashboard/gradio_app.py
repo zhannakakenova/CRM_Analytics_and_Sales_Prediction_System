@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-os.environ.setdefault("MPLCONFIGDIR", "/private/tmp")
+os.environ.setdefault("MPLCONFIGDIR", "/tmp")
 
 import gradio as gr
 import matplotlib
@@ -154,7 +154,10 @@ def buy_prediction(
         "channel": channel,
         "region": region,
     }
-    prediction, probability = predict_buy(payload)
+    try:
+        prediction, probability = predict_buy(payload)
+    except Exception as error:
+        return f"Error: {error}", "Check terminal logs"
     return prediction, f"{probability:.3f}"
 
 
@@ -192,7 +195,10 @@ def sales_prediction(
         "month": month,
         "fiscal_quarter": fiscal_quarter,
     }
-    return f"{predict_sales(payload):.2f}"
+    try:
+        return f"{predict_sales(payload):.2f}"
+    except Exception as error:
+        return f"Error: {error}"
 
 
 def forecast_ui(product, region, horizon):
@@ -224,9 +230,120 @@ def forecast_ui(product, region, horizon):
     return summary, frame, fig
 
 
+PLACEHOLDER_VALUES = {"", "[Not Applicable]", "Unknown", "nan"}
+
+
+def _clean_dropdown_values(values: pd.Series) -> list[str]:
+    unique_values = values.dropna().astype(str).str.strip().unique().tolist()
+    return sorted(value for value in unique_values if value not in PLACEHOLDER_VALUES)
+
+
 def dropdown_values(column: str) -> list[str]:
     frame = load_sales_data()
-    return sorted(frame[column].dropna().astype(str).unique().tolist())
+    return _clean_dropdown_values(frame[column])
+
+
+def dropdown_values_for(parent_column: str, parent_value, child_column: str) -> list[str]:
+    frame = load_sales_data()
+    filtered = frame[frame[parent_column].astype(str) == str(parent_value)]
+    return _clean_dropdown_values(filtered[child_column])
+
+
+def customer_choices() -> list[tuple[str, int]]:
+    frame = load_sales_data()
+    customers = (
+        frame[["customer_key", "customer"]]
+        .dropna()
+        .drop_duplicates()
+        .query("customer_key >= 0")
+        .sort_values(["customer", "customer_key"])
+    )
+    return [
+        (f"{row.customer} (#{int(row.customer_key)})", int(row.customer_key))
+        for row in customers.itertuples(index=False)
+    ]
+
+
+def product_choices() -> list[tuple[str, int]]:
+    frame = load_sales_data()
+    products = (
+        frame[["product_key", "product"]]
+        .dropna()
+        .drop_duplicates()
+        .sort_values(["product", "product_key"])
+    )
+    return [
+        (f"{row.product} (#{int(row.product_key)})", int(row.product_key))
+        for row in products.itertuples(index=False)
+    ]
+
+
+def sales_territory(country_region: str, state_province: str) -> str:
+    frame = load_sales_data()
+    matches = frame[
+        (frame["country_region"].astype(str) == str(country_region))
+        & (frame["state_province"].astype(str) == str(state_province))
+    ]
+    if matches.empty:
+        return ""
+    return str(matches["region"].mode().iloc[0])
+
+
+def update_states_and_territory(country_region: str):
+    choices = dropdown_values_for("country_region", country_region, "state_province")
+    state_province = choices[0] if choices else None
+    territory = sales_territory(country_region, state_province) if state_province else ""
+    return gr.Dropdown(choices=choices, value=state_province), territory
+
+
+def update_territory(country_region: str, state_province: str) -> str:
+    return sales_territory(country_region, state_province)
+
+
+def update_subcategories(category: str):
+    choices = dropdown_values_for("category", category, "subcategory")
+    return gr.Dropdown(choices=choices, value=choices[0] if choices else None)
+
+
+def customer_details(customer_key: int):
+    frame = load_sales_data()
+    row = frame[frame["customer_key"] == int(customer_key)].iloc[0]
+    state_choices = dropdown_values_for("country_region", row["country_region"], "state_province")
+    return (
+        row["country_region"],
+        gr.Dropdown(choices=state_choices, value=row["state_province"]),
+        row["region"],
+        row["channel"],
+    )
+
+
+def product_details(product_key: int):
+    frame = load_sales_data()
+    row = frame[frame["product_key"] == int(product_key)].iloc[0]
+    subcategory_choices = dropdown_values_for("category", row["category"], "subcategory")
+    return (
+        row["category"],
+        gr.Dropdown(choices=subcategory_choices, value=row["subcategory"]),
+        row["color"],
+        float(row["list_price"]),
+    )
+
+
+def regression_product_details(product_key: int):
+    category, subcategory, color, list_price = product_details(product_key)
+    return category, subcategory, color, list_price, list_price
+
+
+DEFAULT_CUSTOMER_KEY = 11000
+DEFAULT_PRODUCT_KEY = 214
+DEFAULT_CUSTOMER = customer_details(DEFAULT_CUSTOMER_KEY)
+DEFAULT_PRODUCT = product_details(DEFAULT_PRODUCT_KEY)
+COUNTRY_VALUES = dropdown_values("country_region")
+CATEGORY_VALUES = dropdown_values("category")
+COLOR_VALUES = dropdown_values("color")
+CHANNEL_VALUES = dropdown_values("channel")
+MONTH_VALUES = dropdown_values("month")
+FISCAL_QUARTER_VALUES = dropdown_values("fiscal_quarter")
 
 
 with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
@@ -282,24 +399,56 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
         )
 
     with gr.Tab("Buy / Not Buy Prediction"):
+        gr.Markdown("Select a customer and product to automatically fill their known attributes.")
         with gr.Row():
-            cls_customer_key = gr.Number(label="customer_key", value=11000)
-            cls_product_key = gr.Number(label="product_key", value=214)
-            cls_order_quantity = gr.Number(label="order_quantity", value=1)
+            cls_customer_key = gr.Dropdown(
+                label="Customer",
+                choices=customer_choices(),
+                value=DEFAULT_CUSTOMER_KEY,
+                filterable=True,
+            )
+            cls_product_key = gr.Dropdown(
+                label="Product",
+                choices=product_choices(),
+                value=DEFAULT_PRODUCT_KEY,
+                filterable=True,
+            )
+            cls_order_quantity = gr.Slider(label="Order quantity", minimum=1, maximum=3, step=1, value=1)
         with gr.Row():
-            cls_list_price = gr.Number(label="list_price", value=1200)
-            cls_country = gr.Textbox(label="country_region", value="United States")
-            cls_state = gr.Textbox(label="state_province", value="California")
+            cls_list_price = gr.Number(label="List price", value=DEFAULT_PRODUCT[3], minimum=0)
+            cls_country = gr.Dropdown(label="Country", choices=COUNTRY_VALUES, value=DEFAULT_CUSTOMER[0])
+            cls_state = gr.Dropdown(
+                label="State / province",
+                choices=dropdown_values_for("country_region", DEFAULT_CUSTOMER[0], "state_province"),
+                value=DEFAULT_CUSTOMER[1].value,
+            )
         with gr.Row():
-            cls_category = gr.Textbox(label="category", value="Bikes")
-            cls_subcategory = gr.Textbox(label="subcategory", value="Mountain Bikes")
-            cls_color = gr.Textbox(label="color", value="Black")
+            cls_category = gr.Dropdown(label="Category", choices=CATEGORY_VALUES, value=DEFAULT_PRODUCT[0])
+            cls_subcategory = gr.Dropdown(
+                label="Subcategory",
+                choices=dropdown_values_for("category", DEFAULT_PRODUCT[0], "subcategory"),
+                value=DEFAULT_PRODUCT[1].value,
+            )
+            cls_color = gr.Dropdown(label="Color", choices=COLOR_VALUES, value=DEFAULT_PRODUCT[2])
         with gr.Row():
-            cls_channel = gr.Textbox(label="channel", value="Reseller")
-            cls_region = gr.Textbox(label="region", value="Northwest")
+            cls_channel = gr.Dropdown(label="Channel", choices=CHANNEL_VALUES, value=DEFAULT_CUSTOMER[3])
+        cls_region = gr.State(DEFAULT_CUSTOMER[2])
         cls_button = gr.Button("Run classification")
         cls_prediction = gr.Textbox(label="Prediction")
         cls_probability = gr.Textbox(label="Probability of Buy")
+        cls_country.change(update_states_and_territory, cls_country, [cls_state, cls_region])
+        cls_state.change(update_territory, [cls_country, cls_state], cls_region)
+        cls_category.change(update_subcategories, cls_category, cls_subcategory)
+        cls_customer_key.change(
+            customer_details,
+            cls_customer_key,
+            [cls_country, cls_state, cls_region, cls_channel],
+        )
+        cls_product_key.change(
+            product_details,
+            cls_product_key,
+            [cls_category, cls_subcategory, cls_color, cls_list_price],
+        )
         cls_button.click(
             buy_prediction,
             [
@@ -319,28 +468,64 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
         )
 
     with gr.Tab("Sales Prediction"):
+        gr.Markdown("Customer and product selections automatically fill the related categorical fields.")
         with gr.Row():
-            reg_customer_key = gr.Number(label="customer_key", value=11000)
-            reg_product_key = gr.Number(label="product_key", value=214)
-            reg_order_quantity = gr.Number(label="order_quantity", value=1)
+            reg_customer_key = gr.Dropdown(
+                label="Customer",
+                choices=customer_choices(),
+                value=DEFAULT_CUSTOMER_KEY,
+                filterable=True,
+            )
+            reg_product_key = gr.Dropdown(
+                label="Product",
+                choices=product_choices(),
+                value=DEFAULT_PRODUCT_KEY,
+                filterable=True,
+            )
+            reg_order_quantity = gr.Slider(label="Order quantity", minimum=1, maximum=3, step=1, value=1)
         with gr.Row():
-            reg_unit_price = gr.Number(label="unit_price", value=1000)
-            reg_discount = gr.Number(label="unit_price_discount_pct", value=0.0)
-            reg_list_price = gr.Number(label="list_price", value=1200)
+            reg_unit_price = gr.Number(label="Unit price", value=DEFAULT_PRODUCT[3], minimum=0)
+            reg_discount = gr.Slider(label="Discount percentage", minimum=0, maximum=1, step=0.01, value=0.0)
+            reg_list_price = gr.Number(label="List price", value=DEFAULT_PRODUCT[3], minimum=0)
         with gr.Row():
-            reg_country = gr.Textbox(label="country_region", value="United States")
-            reg_state = gr.Textbox(label="state_province", value="California")
-            reg_region = gr.Textbox(label="region", value="Northwest")
+            reg_country = gr.Dropdown(label="Country", choices=COUNTRY_VALUES, value=DEFAULT_CUSTOMER[0])
+            reg_state = gr.Dropdown(
+                label="State / province",
+                choices=dropdown_values_for("country_region", DEFAULT_CUSTOMER[0], "state_province"),
+                value=DEFAULT_CUSTOMER[1].value,
+            )
+        reg_region = gr.State(DEFAULT_CUSTOMER[2])
         with gr.Row():
-            reg_category = gr.Textbox(label="category", value="Bikes")
-            reg_subcategory = gr.Textbox(label="subcategory", value="Mountain Bikes")
-            reg_color = gr.Textbox(label="color", value="Black")
+            reg_category = gr.Dropdown(label="Category", choices=CATEGORY_VALUES, value=DEFAULT_PRODUCT[0])
+            reg_subcategory = gr.Dropdown(
+                label="Subcategory",
+                choices=dropdown_values_for("category", DEFAULT_PRODUCT[0], "subcategory"),
+                value=DEFAULT_PRODUCT[1].value,
+            )
+            reg_color = gr.Dropdown(label="Color", choices=COLOR_VALUES, value=DEFAULT_PRODUCT[2])
         with gr.Row():
-            reg_channel = gr.Textbox(label="channel", value="Reseller")
-            reg_month = gr.Textbox(label="month", value="January")
-            reg_fiscal_quarter = gr.Textbox(label="fiscal_quarter", value="Q1")
+            reg_channel = gr.Dropdown(label="Channel", choices=CHANNEL_VALUES, value=DEFAULT_CUSTOMER[3])
+            reg_month = gr.Dropdown(label="Month", choices=MONTH_VALUES, value=MONTH_VALUES[0])
+            reg_fiscal_quarter = gr.Dropdown(
+                label="Fiscal quarter",
+                choices=FISCAL_QUARTER_VALUES,
+                value=FISCAL_QUARTER_VALUES[0],
+            )
         reg_button = gr.Button("Run regression")
         reg_output = gr.Textbox(label="Predicted sales_amount")
+        reg_country.change(update_states_and_territory, reg_country, [reg_state, reg_region])
+        reg_state.change(update_territory, [reg_country, reg_state], reg_region)
+        reg_category.change(update_subcategories, reg_category, reg_subcategory)
+        reg_customer_key.change(
+            customer_details,
+            reg_customer_key,
+            [reg_country, reg_state, reg_region, reg_channel],
+        )
+        reg_product_key.change(
+            regression_product_details,
+            reg_product_key,
+            [reg_category, reg_subcategory, reg_color, reg_list_price, reg_unit_price],
+        )
         reg_button.click(
             sales_prediction,
             [
@@ -380,4 +565,4 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
 
 
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860)
+    demo.launch(server_name="0.0.0.0", server_port=7860, show_error=True)
