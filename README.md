@@ -70,6 +70,8 @@ The project includes two Random Forest models:
 - **Buy / Not Buy classifier**: predicts whether a customer is likely to buy a product.
 - **Sales amount regressor**: predicts the expected sales amount.
 
+The classifier creates synthetic `Not Buy` examples from customer-product pairs that do not appear in historical purchases. Order quantity is excluded from classification to prevent target leakage. The Sales Prediction service returns output from the trained Random Forest Regressor rather than directly calculating a sales formula.
+
 Saved model files:
 
 - `models/random_forest_classifier.joblib`
@@ -121,6 +123,10 @@ Dashboard tabs include:
 - Buy / Not Buy Prediction
 - Sales Prediction
 - Future Sales Forecast
+
+For a detailed explanation of every tab, its inputs, outputs, and suggested student workflow, read [`docs/DASHBOARD_GUIDE.md`](docs/DASHBOARD_GUIDE.md).
+
+For details about classification, synthetic Not Buy records, regression, and forecasting, read [`docs/ML_METHODOLOGY.md`](docs/ML_METHODOLOGY.md).
 
 Important file:
 
@@ -217,7 +223,6 @@ curl -X POST http://localhost:8000/api/predict/buy \
   -d '{
     "customer_key": 11000,
     "product_key": 214,
-    "order_quantity": 1,
     "list_price": 1200,
     "country_region": "United States",
     "state_province": "California",

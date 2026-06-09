@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 class BuyPredictionRequest(BaseModel):
     customer_key: int = Field(..., ge=0)
     product_key: int = Field(..., ge=0)
-    order_quantity: float = Field(..., ge=0)
     list_price: float = Field(..., ge=0)
     country_region: str = Field(..., min_length=1)
     state_province: str = Field(..., min_length=1)
@@ -23,6 +22,7 @@ class BuyPredictionResponse(BaseModel):
 
 
 class SalesPredictionRequest(BuyPredictionRequest):
+    order_quantity: float = Field(..., ge=0)
     unit_price: float = Field(..., ge=0)
     unit_price_discount_pct: float = Field(..., ge=0, le=1)
     month: str = Field(..., min_length=1)

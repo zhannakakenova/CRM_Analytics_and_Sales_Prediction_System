@@ -23,7 +23,6 @@ def _build_classifier_dataset(df: pd.DataFrame) -> pd.DataFrame:
     positive = (
         df.groupby(["customer_key", "product_key"], as_index=False)
         .agg(
-            order_quantity=("order_quantity", "sum"),
             sales_amount=("sales_amount", "sum"),
             country_region=("country_region", "first"),
             state_province=("state_province", "first"),
@@ -55,6 +54,7 @@ def _build_classifier_dataset(df: pd.DataFrame) -> pd.DataFrame:
         country_region=("country_region", "first"),
         state_province=("state_province", "first"),
         region=("region", "first"),
+        channel=("channel", "first"),
     )
     product_info = df.groupby("product_key", as_index=False).agg(
         category=("category", "first"),
@@ -65,9 +65,7 @@ def _build_classifier_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
     negative = negative.merge(customer_info, on="customer_key", how="left")
     negative = negative.merge(product_info, on="product_key", how="left")
-    negative["order_quantity"] = 0
     negative["sales_amount"] = 0.0
-    negative["channel"] = "Unknown"
     negative["buy_label"] = 0
 
     return pd.concat([positive, negative], ignore_index=True)
@@ -87,7 +85,7 @@ def train_classifier(df: pd.DataFrame) -> None:
         "channel",
         "region",
     ]
-    numeric_columns = ["customer_key", "product_key", "order_quantity", "list_price"]
+    numeric_columns = ["customer_key", "product_key", "list_price"]
     preprocessor = ColumnTransformer(
         transformers=[
             (
@@ -123,7 +121,7 @@ def train_classifier(df: pd.DataFrame) -> None:
     print("\n=== Classification Results ===")
     print(f"Accuracy: {accuracy_score(y_test, predictions):.4f}")
     print(classification_report(y_test, predictions, digits=4))
-    joblib.dump(model, MODELS_DIR / "random_forest_classifier.joblib")
+    joblib.dump(model, MODELS_DIR / "random_forest_classifier.joblib", compress=3)
 
 
 def train_regressor(df: pd.DataFrame) -> None:
@@ -178,7 +176,7 @@ def train_regressor(df: pd.DataFrame) -> None:
     print("\n=== Regression Results ===")
     print(f"MAE: {mean_absolute_error(y_test, predictions):.4f}")
     print(f"R2:  {r2_score(y_test, predictions):.4f}")
-    joblib.dump(model, MODELS_DIR / "random_forest_regressor.joblib")
+    joblib.dump(model, MODELS_DIR / "random_forest_regressor.joblib", compress=3)
 
 
 def main() -> None:

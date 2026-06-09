@@ -131,7 +131,6 @@ def run_interactive_analysis(
 def buy_prediction(
     customer_key,
     product_key,
-    order_quantity,
     list_price,
     country_region,
     state_province,
@@ -144,7 +143,6 @@ def buy_prediction(
     payload = {
         "customer_key": int(customer_key),
         "product_key": int(product_key),
-        "order_quantity": float(order_quantity),
         "list_price": float(list_price),
         "country_region": country_region,
         "state_province": state_province,
@@ -399,7 +397,10 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
         )
 
     with gr.Tab("Buy / Not Buy Prediction"):
-        gr.Markdown("Select a customer and product to automatically fill their known attributes.")
+        gr.Markdown(
+            "Select a customer and product to estimate purchase likelihood. "
+            "The classifier is trained with observed purchases and synthetic Not Buy customer-product pairs."
+        )
         with gr.Row():
             cls_customer_key = gr.Dropdown(
                 label="Customer",
@@ -413,7 +414,6 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
                 value=DEFAULT_PRODUCT_KEY,
                 filterable=True,
             )
-            cls_order_quantity = gr.Slider(label="Order quantity", minimum=1, maximum=3, step=1, value=1)
         with gr.Row():
             cls_list_price = gr.Number(label="List price", value=DEFAULT_PRODUCT[3], minimum=0)
             cls_country = gr.Dropdown(label="Country", choices=COUNTRY_VALUES, value=DEFAULT_CUSTOMER[0])
@@ -454,7 +454,6 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
             [
                 cls_customer_key,
                 cls_product_key,
-                cls_order_quantity,
                 cls_list_price,
                 cls_country,
                 cls_state,
@@ -468,7 +467,10 @@ with gr.Blocks(title="AdventureWorks Analytics Platform") as demo:
         )
 
     with gr.Tab("Sales Prediction"):
-        gr.Markdown("Customer and product selections automatically fill the related categorical fields.")
+        gr.Markdown(
+            "Predict a transaction sales amount with the trained Random Forest Regressor. "
+            "Customer and product selections automatically fill related fields."
+        )
         with gr.Row():
             reg_customer_key = gr.Dropdown(
                 label="Customer",

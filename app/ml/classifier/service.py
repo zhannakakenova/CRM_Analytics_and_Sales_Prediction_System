@@ -10,7 +10,6 @@ from app.core import MODELS_DIR
 CLASSIFIER_FEATURES = [
     "customer_key",
     "product_key",
-    "order_quantity",
     "country_region",
     "state_province",
     "category",
