@@ -175,7 +175,7 @@ This trains the classifier and regressor, then saves them as `.joblib` files.
 ### 5. Run the Application
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Then open:
@@ -309,9 +309,16 @@ Run:
 python3 -m app.ml.training
 ```
 
-### `'SimpleImputer' object has no attribute '_fill_dtype'`
+### Model compatibility errors
 
-The saved models were trained with scikit-learn `1.7.2`. Rebuild the Docker image after installing the pinned dependencies:
+The saved models require the pinned scikit-learn version from `requirements.txt`. Always launch the app through the active environment:
+
+```bash
+source .venv/bin/activate
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+For Docker, rebuild the image after dependency changes:
 
 ```bash
 docker build --no-cache -t adventureworks-analytics .
@@ -323,7 +330,7 @@ docker run -p 8000:8000 adventureworks-analytics
 Run the app on another port:
 
 ```bash
-uvicorn app.main:app --reload --port 8001
+python -m uvicorn app.main:app --reload --port 8001
 ```
 
 Then open `http://localhost:8001/`.

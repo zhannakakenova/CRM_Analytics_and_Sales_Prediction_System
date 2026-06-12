@@ -4,7 +4,7 @@ import gradio as gr
 from fastapi import FastAPI
 
 from app.api.routers import eda, forecast, predict
-from app.dashboard.gradio_app import demo
+from app.dashboard.gradio_app import APP_CSS, APP_THEME, demo
 
 app = FastAPI(
     title="AdventureWorks Analytics Platform",
@@ -16,4 +16,4 @@ app.include_router(eda.router, prefix="/api/eda", tags=["EDA"])
 app.include_router(predict.router, prefix="/api/predict", tags=["Predictions"])
 app.include_router(forecast.router, prefix="/api/forecast", tags=["Forecasting"])
 
-app = gr.mount_gradio_app(app, demo, path="/")
+app = gr.mount_gradio_app(app, demo, path="/", css=APP_CSS, theme=APP_THEME)
