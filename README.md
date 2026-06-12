@@ -2,6 +2,8 @@
 
 This project is a small CRM analytics application built with Python. It uses AdventureWorks sales data to help students practice data preparation, exploratory data analysis (EDA), machine learning, forecasting, API development, and dashboard building.
 
+web-production-03267.up.railway.app
+
 The application has two main parts:
 
 - A **FastAPI backend** with endpoints for analytics, predictions, and forecasting.
